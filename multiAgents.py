@@ -67,14 +67,51 @@ class ReflexAgent(Agent):
         to create a masterful evaluation function.
         """
         # Useful information you can extract from a GameState (pacman.py)
+        def bounds(pos, x, y, walls):
+            height = 0 <= pos[1] < y
+            width = 0 <= pos[0] < x
+            wall = walls[pos[0]][pos[1]]
+            return width and height and not wall
+
+        def bfs(start, grid, walls):
+            queue = [start]
+            visited = set()
+            while queue:
+                curr = queue.pop(0)
+                if grid[curr[0]][curr[1]]:
+                    return curr
+                left = (curr[0] - 1, curr[1])
+                right = (curr[0] + 1, curr[1])
+                up = (curr[0], curr[1] + 1)
+                down = (curr[0], curr[1] - 1)
+                directions = [left, right, up, down]
+                for succ in [way for way in directions if bounds(way, grid.width, grid.height, walls)]:
+                    if succ not in visited:
+                        visited.add(succ)
+                        queue.append(succ)
+            return start
+
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        foodDist = manhattanDistance(bfs(newPos, newFood, currentGameState.getWalls()), newPos)
+        evaluation = successorGameState.getScore()
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        if not currentGameState.getFood()[newPos[0]][newPos[1]]:
+            evaluation -= 10 * foodDist
+
+        for i, ghostPos in enumerate([newGhostState.getPosition() for newGhostState in newGhostStates]):
+            if newPos == ghostPos:
+                return 0
+            if newScaredTimes[i] < 2:
+                evaluation -= round(75/manhattanDistance(newPos, ghostPos))
+
+        if currentGameState.getPacmanPosition() == newPos:
+            evaluation -= 15
+
+        return evaluation
 
 def scoreEvaluationFunction(currentGameState):
     """
