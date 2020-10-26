@@ -205,8 +205,54 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def minimax(agent, depth, gameState, a = float("-inf"), b = float("inf")):
+            if gameState.isLose() or gameState.isWin() or not depth:
+                return self.evaluationFunction(gameState), Directions.STOP
+
+            nextAgent = (agent + 1) % gameState.getNumAgents()
+            if not nextAgent:
+                depth -= 1
+
+            nextActs = [action for action in gameState.getLegalActions(agent)]
+
+            if agent == 0:
+                maximum = float("-inf")
+                maxAct = None
+                for action in nextActs:
+                    newUtil, _ = minimax(nextAgent, depth, gameState.generateSuccessor(agent, action), a, b)
+
+                    if newUtil is not None and newUtil > maximum:
+                        maximum = newUtil
+                        maxAct = action
+                        a = max(a, maximum)
+
+                    if b <= a:
+                        if maximum == float("-inf"):
+                            maximum = None
+
+                        break
+
+                return maximum, maxAct
+
+            else:
+                minimum = float("inf")
+                minAct = None
+                for action in nextActs:
+                    newUtil, _ = minimax(nextAgent, depth, gameState.generateSuccessor(agent, action), a, b)
+
+                    if newUtil is not None and newUtil < minimum:
+                        minimum = newUtil
+                        minAct = action
+                        b = min(b, minimum)
+
+                    if b <= a:
+                        if minimum == float("inf"):
+                            minimum = None
+                        break
+
+                return minimum, minAct
+
+        return minimax(0, self.depth, gameState)[1]
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
@@ -247,10 +293,45 @@ def betterEvaluationFunction(currentGameState):
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    def bounds(pos, x, y):
+        height = 0 <= pos[1] < y
+        width = 0 <= pos[0] < x
+        return width and height
+
+    def bfs(start, grid):
+        queue = [start]
+        visited = set()
+        while queue:
+            curr = queue.pop(0)
+            if grid[curr[0]][curr[1]]:
+                return curr
+            left = (curr[0] - 1, curr[1])
+            right = (curr[0] + 1, curr[1])
+            up = (curr[0], curr[1] + 1)
+            down = (curr[0], curr[1] - 1)
+            directions = [left, right, up, down]
+            for succ in [way for way in directions if bounds(way, grid.width, grid.height)]:
+                if succ not in visited:
+                    visited.add(succ)
+                    queue.append(succ)
+        return start
+
+    pos = currentGameState.getPacmanPosition()
+    food = currentGameState.getFood()
+    ghostStates = currentGameState.getGhostStates()
+    scaredTimes = [ghostState.scaredTimer for ghostState in ghostStates]
+    foodDist = manhattanDistance(bfs(pos, food), pos)
+    evaluation = currentGameState.getScore()
+    evaluation -= foodDist
+
+    for i, ghostPos in enumerate([ghostState.getPosition() for ghostState in ghostStates]):
+        if scaredTimes[i] < 2:
+            evaluation -= round(75/(manhattanDistance(pos, ghostPos) + 1))
+
+    print(evaluation)
+    return evaluation
 
 # Abbreviation
 better = betterEvaluationFunction
