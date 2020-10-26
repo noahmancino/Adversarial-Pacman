@@ -226,10 +226,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                         maxAct = action
                         a = max(a, maximum)
 
-                    if b <= a:
-                        if maximum == float("-inf"):
-                            maximum = None
-
+                    if b < a:
                         break
 
                 return maximum, maxAct
@@ -245,9 +242,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                         minAct = action
                         b = min(b, minimum)
 
-                    if b <= a:
-                        if minimum == float("inf"):
-                            minimum = None
+                    if b < a:
                         break
 
                 return minimum, minAct
@@ -330,7 +325,6 @@ def betterEvaluationFunction(currentGameState):
         if scaredTimes[i] < 2:
             evaluation -= round(75/(manhattanDistance(pos, ghostPos) + 1))
 
-    print(evaluation)
     return evaluation
 
 # Abbreviation
