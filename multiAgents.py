@@ -177,16 +177,13 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 return self.evaluationFunction(gameState), Directions.STOP
 
             nextAgent = (agent + 1) % gameState.getNumAgents()
-            if nextAgent == 1 or not nextAgent:
-                newDepth = depth - 1
-            else:
-                newDepth = depth
+            if not nextAgent:
+                depth -= 1
 
             nextActs = [action for action in gameState.getLegalActions(agent)]
             stateUtils = []
             for action in nextActs:
-                print(stateUtils)
-                stateUtils.append(minimax(nextAgent, newDepth, gameState.generateSuccessor(agent, action))[0])
+                stateUtils.append(minimax(nextAgent, depth, gameState.generateSuccessor(agent, action))[0])
 
             if agent == 0:
                 utility = max(stateUtils)
